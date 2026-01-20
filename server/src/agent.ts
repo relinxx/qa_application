@@ -155,10 +155,43 @@ async function executeTool(
     throw new Error('MCP client not initialized');
   }
 
-  return await mcpClient.callTool({
-    name: toolName,
-    arguments: args
-  });
+  try {
+    const result = await mcpClient.callTool({
+      name: toolName,
+      arguments: args
+    });
+
+    // Check if MCP returned an error in the result
+    if (result && typeof result === 'object') {
+      // MCP tools may return errors in content field
+      if ('content' in result && Array.isArray(result.content)) {
+        for (const item of result.content) {
+          if (item.type === 'text' && item.text) {
+            // Check if the text contains error indicators
+            const text = item.text;
+            if (text.includes('Error:') || text.includes('error:') || text.includes('Unknown error')) {
+              throw new Error(text);
+            }
+          }
+        }
+      }
+      // Some MCP tools return errors directly
+      if ('isError' in result && result.isError) {
+        const resultAny = result as any;
+        const errorMsg = (Array.isArray(resultAny.content) && resultAny.content[0]?.text) 
+          || resultAny.message 
+          || 'Unknown error from MCP tool';
+        throw new Error(errorMsg);
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    // Provide more detailed error information
+    const errorMessage = error.message || error.toString() || 'Unknown error';
+    console.error(`MCP tool execution error for ${toolName}:`, error);
+    throw new Error(`MCP tool "${toolName}" failed: ${errorMessage}`);
+  }
 }
 
 /**

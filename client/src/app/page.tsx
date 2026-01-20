@@ -85,9 +85,10 @@ export default function Home() {
                 status: 'Success'
               });
             } else if (log.type === 'error') {
+              const errorMsg = log.message || log.error || JSON.stringify(log) || 'Unknown error';
               steps.push({
                 step: stepNum++,
-                action: `Error encountered: ${log.message || log.error || 'Unknown error'}`,
+                action: `Error encountered: ${errorMsg}`,
                 time: log.timestamp ? new Date(log.timestamp).toLocaleString() : '',
                 status: 'Error'
               });
@@ -328,53 +329,67 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Top gradient header */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 pb-24">
-        <div className="max-w-6xl mx-auto px-6 pt-8 pb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-              QA_APP
-            </h1>
-            <p className="mt-1 text-sm md:text-base text-slate-100/80">
-              Autonomous test generation and execution for any web application.
-            </p>
-          </div>
-          <div className="hidden md:flex items-center gap-3">
-            <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                isRunning
-                  ? 'bg-emerald-900/70 text-emerald-100 border border-emerald-500/60'
-                  : 'bg-slate-900/40 text-slate-100 border border-slate-300/40'
-              }`}
-            >
-              <span className="mr-1 h-2 w-2 rounded-full bg-emerald-400 shadow shadow-emerald-400/70" />
-              {isRunning ? 'Agent running' : 'Idle'}
-            </span>
+    <main className="min-h-screen bg-dark-bg text-foreground relative overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-dark-bg via-dark-surface to-dark-bg pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#a855f7]/10 via-transparent to-[#06b6d4]/10 opacity-30 animate-pulse-slow" />
+      </div>
+
+      {/* Hero Section */}
+      <div className="relative z-10 pt-12 pb-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-3">
+                <span className="gradient-text">QA_APP</span>
+              </h1>
+              <p className="text-lg md:text-xl text-gray-400 font-light tracking-tight">
+                Autonomous test generation and execution for any web application
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-3">
+              <div
+                className={`glass rounded-full px-4 py-2 flex items-center gap-2 transition-all ${
+                  isRunning ? 'neon-border-cyan shadow-neon-cyan' : ''
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isRunning
+                      ? 'bg-[#06b6d4] shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse'
+                      : 'bg-gray-500'
+                  }`}
+                />
+                <span className="text-sm font-medium">
+                  {isRunning ? 'Agent Running' : 'Idle'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main content card area */}
-      <div className="-mt-16 pb-10">
-        <div className="max-w-6xl mx-auto px-6">
+      {/* Main content area */}
+      <div className="relative z-10 pb-16">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left column: config panel */}
-            <section className="lg:col-span-2 space-y-4">
-              <div className="bg-slate-900/80 border border-slate-700/80 rounded-2xl shadow-xl shadow-slate-950/40 p-6 space-y-5">
+            {/* Left column: Configuration Panel */}
+            <section className="lg:col-span-2 space-y-5">
+              {/* Configuration Card */}
+              <div className="glass-elevated rounded-2xl p-6 space-y-6 glow-on-hover">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold">Target Configuration</h2>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Define the URL and optional schema for the agent to explore.
+                    <h2 className="text-xl font-semibold mb-1">Target Configuration</h2>
+                    <p className="text-sm text-gray-400 font-light">
+                      Define the URL and optional schema for the agent to explore
                     </p>
                   </div>
-                  <span className="hidden sm:inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[11px] font-medium text-slate-300 border border-slate-600/60">
+                  <span className="hidden sm:inline-flex items-center rounded-full glass px-3 py-1 text-xs font-medium text-[#c084fc] neon-border">
                     Fully autonomous
                   </span>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <UrlInput value={url} onChange={setUrl} disabled={isRunning} />
                   <SchemaUpload
                     value={schema}
@@ -383,29 +398,32 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-800">
+                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-dark-border">
                   <button
                     onClick={handleStart}
                     disabled={isRunning || !url.trim()}
-                    className={`inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+                    className={`inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold transition-all duration-300 ${
                       isRunning || !url.trim()
-                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-900 focus:ring-emerald-400'
+                        ? 'glass text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-[#a855f7] to-[#9333ea] text-white hover:shadow-neon-purple hover:scale-[1.02] active:scale-[0.98]'
                     }`}
                   >
                     {isRunning ? (
                       <>
-                        <span className="mr-2 h-3 w-3 rounded-full border-2 border-slate-900 border-t-transparent animate-spin" />
+                        <span className="mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                         Running…
                       </>
                     ) : (
-                      'Start test generation'
+                      <>
+                        <span className="mr-2">▶</span>
+                        Start Test Generation
+                      </>
                     )}
                   </button>
                   {isRunning && (
                     <button
                       onClick={handleStop}
-                      className="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-600/70 transition"
+                      className="inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold glass text-gray-300 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all duration-300 neon-border"
                     >
                       Stop
                     </button>
@@ -413,37 +431,39 @@ export default function Home() {
                   {report && !isRunning && (
                     <button
                       onClick={handleDownloadReport}
-                      className="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium bg-slate-900 hover:bg-slate-800 text-slate-100 border border-slate-600/70 transition"
+                      className="inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold glass text-[#06b6d4] hover:bg-[#06b6d4]/10 hover:text-[#22d3ee] hover:shadow-neon-cyan transition-all duration-300 neon-border-cyan"
                     >
-                      Download report
+                      <span className="mr-2">📥</span>
+                      Download Report
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Generated tests summary */}
-              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
+              {/* Generated Tests Card */}
+              <div className="glass rounded-2xl p-5 space-y-4 glow-on-hover">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-100">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <span className="text-[#10b981]">●</span>
                     Generated Test Files
                   </h3>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-gray-500 font-mono">
                     {testFiles.length} file{testFiles.length === 1 ? '' : 's'}
                   </span>
                 </div>
                 {testFiles.length === 0 ? (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-gray-500 italic">
                     No test files generated yet. Start a run to see results here.
                   </p>
                 ) : (
-                  <ul className="space-y-1 max-h-40 overflow-y-auto text-xs">
+                  <ul className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
                     {testFiles.map((file, idx) => (
                       <li
                         key={idx}
-                        className="flex items-center gap-2 rounded-md bg-slate-950/40 border border-slate-800 px-3 py-2"
+                        className="flex items-center gap-3 rounded-lg glass p-3 neon-border hover:bg-[#a855f7]/5 transition-all"
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        <span className="font-mono text-slate-200 truncate">
+                        <span className="h-2 w-2 rounded-full bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                        <span className="font-mono text-sm text-gray-300 truncate flex-1">
                           {file}
                         </span>
                       </li>
@@ -453,23 +473,24 @@ export default function Home() {
               </div>
             </section>
 
-            {/* Right column: console */}
+            {/* Right column: Console */}
             <section className="lg:col-span-3">
-              <div className="bg-slate-900/80 border border-slate-700/80 rounded-2xl shadow-xl shadow-slate-950/40 p-4 md:p-5 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-3">
+              <div className="glass-strong rounded-2xl p-5 h-full flex flex-col glow-on-hover">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-slate-100">
+                    <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
+                      <span className="text-[#06b6d4]">▸</span>
                       Agent Console
                     </h2>
-                    <p className="text-xs text-slate-500">
-                      Live stream of agent thoughts, tool calls, and test results.
+                    <p className="text-sm text-gray-400 font-light">
+                      Live stream of agent thoughts, tool calls, and test results
                     </p>
                   </div>
-                  <span className="hidden sm:inline-flex rounded-full bg-slate-800 px-3 py-1 text-[11px] text-slate-300 border border-slate-600/60">
+                  <span className="hidden sm:inline-flex rounded-full glass px-3 py-1.5 text-xs font-medium text-gray-300 neon-border">
                     {logs.length} messages
                   </span>
                 </div>
-                <div className="flex-1 min-h-[380px]">
+                <div className="flex-1 min-h-[500px]">
                   <LogConsole logs={logs} />
                 </div>
               </div>

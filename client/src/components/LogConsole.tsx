@@ -20,15 +20,17 @@ export default function LogConsole({ logs }: LogConsoleProps) {
   const getLogColor = (type: LogMessage['type']) => {
     switch (type) {
       case 'success':
-        return 'text-green-600';
+        return 'text-[#10b981]';
       case 'error':
-        return 'text-red-600';
+        return 'text-red-400';
       case 'warning':
-        return 'text-yellow-600';
+        return 'text-[#f59e0b]';
       case 'agent':
-        return 'text-blue-600 font-semibold';
+        return 'text-[#c084fc] font-semibold';
+      case 'info':
+        return 'text-[#06b6d4]';
       default:
-        return 'text-gray-700';
+        return 'text-gray-400';
     }
   };
 
@@ -47,34 +49,54 @@ export default function LogConsole({ logs }: LogConsoleProps) {
     }
   };
 
+  const getLogGlow = (type: LogMessage['type']) => {
+    switch (type) {
+      case 'success':
+        return 'shadow-[0_0_8px_rgba(16,185,129,0.3)]';
+      case 'error':
+        return 'shadow-[0_0_8px_rgba(239,68,68,0.3)]';
+      case 'warning':
+        return 'shadow-[0_0_8px_rgba(245,158,11,0.3)]';
+      case 'agent':
+        return 'shadow-[0_0_8px_rgba(168,85,247,0.3)]';
+      default:
+        return '';
+    }
+  };
+
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="bg-gray-800 text-white px-4 py-2 rounded-t-lg flex items-center justify-between">
-        <span className="font-mono text-sm font-semibold">Agent Console</span>
-        <span className="text-xs text-gray-400">{logs.length} messages</span>
-      </div>
+    <div className="w-full h-full flex flex-col glass rounded-xl overflow-hidden">
       <div
         ref={consoleRef}
-        className="flex-1 bg-gray-900 text-gray-100 p-4 rounded-b-lg overflow-y-auto font-mono text-sm"
+        className="flex-1 p-4 overflow-y-auto font-mono text-sm scrollbar-thin"
         style={{ minHeight: '400px', maxHeight: '600px' }}
       >
         {logs.length === 0 ? (
-          <div className="text-gray-500 italic">Waiting for agent to start...</div>
+          <div className="text-gray-500 italic flex items-center gap-2">
+            <span className="animate-pulse">▸</span>
+            Waiting for agent to start...
+          </div>
         ) : (
-          logs.map((log, index) => (
-            <div
-              key={index}
-              className={`mb-2 ${getLogColor(log.type)}`}
-            >
-              <span className="mr-2">{getLogIcon(log.type)}</span>
-              {log.timestamp && (
-                <span className="text-gray-500 text-xs mr-2">
-                  {new Date(log.timestamp).toLocaleTimeString()}
+          <div className="space-y-2">
+            {logs.map((log, index) => (
+              <div
+                key={index}
+                className={`flex items-start gap-3 p-2 rounded-lg transition-all hover:bg-white/5 ${getLogColor(log.type)}`}
+              >
+                <span className={`flex-shrink-0 ${getLogGlow(log.type)}`}>
+                  {getLogIcon(log.type)}
                 </span>
-              )}
-              <span>{log.message || log.error || JSON.stringify(log)}</span>
-            </div>
-          ))
+                {log.timestamp && (
+                  <span className="text-gray-600 text-xs font-light flex-shrink-0">
+                    {new Date(log.timestamp).toLocaleTimeString()}
+                  </span>
+                )}
+                <span className="flex-1 break-words leading-relaxed">
+                  {log.message || log.error || JSON.stringify(log)}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
