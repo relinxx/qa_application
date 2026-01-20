@@ -225,6 +225,9 @@ AUTONOMOUS DISCOVERY GUIDELINES:
 - Be intelligent: Identify patterns (e.g., if you see a login form, check for registration, password reset, etc.)
 - Use Playwright MCP tools extensively: Maps (to understand page structure), click (to navigate), screenshot (to verify UI state)
 - Document your findings: As you explore, mentally map out what test scenarios make sense
+- Avoid excessive back navigation:
+  - Do not call browser_navigate_back more than 2 times in a row.
+  - Prefer direct navigation (browser_navigate) or clicking explicit links/buttons.
 
 TEST GENERATION GUIDELINES:
 - Write well-structured, maintainable test code based on your discoveries
@@ -267,6 +270,7 @@ No manual test steps needed - discover everything yourself and figure out what t
   ];
 
   let iterations = 0;
+  let consecutiveNavigateBack = 0;
 
   try {
     while (iterations < MAX_ITERATIONS) {
@@ -345,6 +349,25 @@ No manual test steps needed - discover everything yourself and figure out what t
         });
 
         try {
+          // Guard: prevent infinite/invalid back navigation loops (common cause of "history exhausted").
+          if (toolName === 'browser_navigate_back') {
+            consecutiveNavigateBack += 1;
+            if (consecutiveNavigateBack > 2) {
+              const msg =
+                'Blocked browser_navigate_back: navigation history likely exhausted. ' +
+                'Instead, navigate using explicit URLs (browser_navigate) or click links/buttons.';
+              onLog({ type: 'warning', message: msg, timestamp: new Date().toISOString() });
+              messages.push({
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ success: false, error: msg })
+              });
+              continue;
+            }
+          } else {
+            consecutiveNavigateBack = 0;
+          }
+
           const toolResult = await executeTool(toolName, toolArgs, customTools);
           
           // Format result for LLM
