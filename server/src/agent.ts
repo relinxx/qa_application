@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import OpenAI from 'openai';
+import { OpenAI } from 'openai';
 import { getCustomTools } from './tools';
 import { LogMessage } from './types';
 import { getRateLimiter } from './rateLimiter';
@@ -500,45 +500,7 @@ export async function runAgent(
   });
 
   // Initialize MCP client if not already done
-  await initializeMCPClient();
 
-  const { allTools, customTools } = await getAllTools();
-
-  const isSauceDemo = /saucedemo\.com/i.test(targetUrl);
-
-  // Build optimized system prompt (reduced token usage)
-  const systemPrompt = `You are a QA Engineer AI agent. AUTOMATICALLY discover and test websites.
-
-PHASE 1: DISCOVERY
-1. Navigate using browser_navigate
-2. Map pages and interactive elements
-3. Identify critical user flows
-
-PHASE 2: TEST GENERATION
-4. Write Playwright test suites
-5. Save with saveTestFile (timestamped filenames)
-6. Run with runPlaywrightTests
-
-${schema ? `\nSchema:\n${schema}\n` : ''}
-${isSauceDemo ? `SauceDemo: Test purchase flow (standard_user/secret_sauce) and locked_out_user. Use data-test selectors.` : ''}
-
-CRITICAL RULES:
-- MODAL/POPUP HANDLING: After login or any action, CHECK for modal dialogs (password change, alerts, etc). If you see a modal with OK/Cancel/Close button, CLICK IT FIRST before doing anything else. Look for elements like: button containing "OK", "Close", "Cancel", "Dismiss", "Continue", or X icons.
-- If clicks fail repeatedly, a modal is likely blocking - take a snapshot and look for dismiss buttons.
-- Max 2 consecutive browser_navigate_back calls
-- Use data-test selectors when available
-- In tests: page.on('dialog', d => d.accept())
-- WHEN FINISHED: Call browser_close to close the browser window
-
-Response format (STRICT JSON):
-{
-  "summary": string,
-  "generatedFiles": string[],
-  "commandsRun": string[],
-  "results": { "status": "passed"|"failed"|"unknown", "details": string },
-  "nextSteps": string[]
-}
-`;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     {
