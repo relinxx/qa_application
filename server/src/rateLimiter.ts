@@ -17,6 +17,9 @@ interface RateLimitConfig {
   backoffMultiplier: number;
 }
 
+// Logger callback type for SSE integration
+export type RateLimitLogger = (message: string) => void;
+
 interface TokenUsage {
   tokens: number;
   timestamp: number;
@@ -36,6 +39,7 @@ export class RateLimiter {
   private isProcessingQueue: boolean = false;
   private currentTokens: number = 0;
   private lastResetTime: number = Date.now();
+  private logger: RateLimitLogger | null = null;
 
   constructor(config: Partial<RateLimitConfig> = {}) {
     this.config = {
@@ -46,6 +50,23 @@ export class RateLimiter {
       maxRetryDelay: config.maxRetryDelay || 60000,
       backoffMultiplier: config.backoffMultiplier || 2
     };
+  }
+
+  /**
+   * Set logger callback for SSE integration
+   */
+  public setLogger(logger: RateLimitLogger | null): void {
+    this.logger = logger;
+  }
+
+  /**
+   * Log message to both console and optional SSE logger
+   */
+  private log(message: string): void {
+    console.log(message);
+    if (this.logger) {
+      this.logger(message);
+    }
   }
 
   /**
@@ -92,27 +113,41 @@ export class RateLimiter {
   }
 
   /**
-   * Wait until we have enough token capacity
+   * Wait until we have enough token capacity (loops until capacity available)
    */
   private async waitForTokenCapacity(requiredTokens: number): Promise<void> {
-    this.cleanupTokenHistory();
+    const maxWaitTime = 120000; // Max 2 minutes total wait
+    const startTime = Date.now();
 
-    const availableTokens = this.config.tokensPerMinute - this.currentTokens;
-    
-    if (availableTokens >= requiredTokens) {
-      return; // We have capacity
-    }
-
-    // Calculate wait time based on oldest token usage
-    if (this.tokenUsageHistory.length > 0) {
-      const oldestUsage = this.tokenUsageHistory[0];
-      const age = Date.now() - oldestUsage.timestamp;
-      const waitTime = Math.max(0, 60000 - age + 100); // Wait until oldest expires + buffer
+    while (true) {
+      this.cleanupTokenHistory();
+      const availableTokens = this.config.tokensPerMinute - this.currentTokens;
       
-      if (waitTime > 0) {
-        console.log(`⏳ Rate limiter: Waiting ${Math.ceil(waitTime / 1000)}s for token capacity...`);
-        await this.sleep(waitTime);
-        this.cleanupTokenHistory();
+      if (availableTokens >= requiredTokens) {
+        return; // We have capacity
+      }
+
+      // Check if we've waited too long
+      if (Date.now() - startTime > maxWaitTime) {
+        this.log(`⚠️ Rate limiter: Max wait time exceeded, proceeding anyway`);
+        return;
+      }
+
+      // Calculate wait time based on oldest token usage
+      if (this.tokenUsageHistory.length > 0) {
+        const oldestUsage = this.tokenUsageHistory[0];
+        const age = Date.now() - oldestUsage.timestamp;
+        const waitTime = Math.min(Math.max(0, 60000 - age + 500), 10000); // Wait max 10s per iteration
+        
+        if (waitTime > 0) {
+          const needed = requiredTokens - availableTokens;
+          this.log(`⏳ Rate limiter: Need ${needed.toLocaleString()} more tokens. Waiting ${Math.ceil(waitTime / 1000)}s...`);
+          await this.sleep(waitTime);
+        }
+      } else {
+        // No history but somehow over limit - reset
+        this.currentTokens = 0;
+        return;
       }
     }
   }
@@ -158,82 +193,98 @@ export class RateLimiter {
     priority: number = 0
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      const execute = async () => {
-        try {
-          // Estimate tokens if not provided
-          let tokens = estimatedTokens;
-          if (!tokens) {
-            // We can't estimate without seeing the request, so use a conservative default
-            tokens = 2000; // Default estimate
-          }
+      const execute = async (): Promise<T> => {
+        // Estimate tokens if not provided
+        let tokens = estimatedTokens;
+        if (!tokens) {
+          tokens = 2000; // Default estimate
+        }
 
-          // Reserve capacity (wait if needed, but don't record yet)
-          await this.waitForTokenCapacity(tokens);
-          
-          // Temporarily reserve the estimated tokens to prevent other requests from using them
-          this.recordTokenUsage(tokens);
+        // Reserve capacity (wait if needed)
+        await this.waitForTokenCapacity(tokens);
+        
+        // Reserve the estimated tokens
+        this.recordTokenUsage(tokens);
 
-          // Execute with retry logic
-          let lastError: any;
-          let retryDelay = this.config.initialRetryDelay;
-          let actualTokensUsed = tokens; // Default to estimate
+        // Execute with retry logic
+        let lastError: any;
+        let retryDelay = this.config.initialRetryDelay;
+        let actualTokensUsed = tokens;
 
-          for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
-            try {
-              const result = await requestFn();
-              
-              // If result has usage info, extract it (for OpenAI responses)
-              if (result && typeof result === 'object' && 'usage' in result) {
-                const usage = (result as any).usage;
-                if (usage && typeof usage.total_tokens === 'number') {
-                  actualTokensUsed = usage.total_tokens;
-                }
-              }
-              
-              // Adjust token usage: remove estimate, add actual
-              if (actualTokensUsed !== tokens) {
-                this.recordTokenUsage(actualTokensUsed - tokens);
-              }
-              
-              return result;
-            } catch (error: any) {
-              lastError = error;
-
-              // Check if it's a rate limit error
-              if (error.status === 429 || error.message?.includes('429') || error.message?.includes('rate limit')) {
-                const retryAfter = this.extractRetryAfter(error);
-                const waitTime = retryAfter || retryDelay;
-
-                console.log(`⚠️  Rate limit hit (attempt ${attempt + 1}/${this.config.maxRetries + 1}). Waiting ${Math.ceil(waitTime / 1000)}s...`);
-                
-                if (attempt < this.config.maxRetries) {
-                  await this.sleep(waitTime);
-                  retryDelay = Math.min(
-                    retryDelay * this.config.backoffMultiplier,
-                    this.config.maxRetryDelay
-                  );
-                  continue;
-                }
-              } else {
-                // Non-rate-limit error, don't retry
-                throw error;
+        for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
+          try {
+            const result = await requestFn();
+            
+            // Extract actual token usage from response
+            if (result && typeof result === 'object' && 'usage' in result) {
+              const usage = (result as any).usage;
+              if (usage && typeof usage.total_tokens === 'number') {
+                actualTokensUsed = usage.total_tokens;
               }
             }
-          }
+            
+            // Adjust token usage if actual differs from estimate
+            if (actualTokensUsed !== tokens) {
+              this.recordTokenUsage(actualTokensUsed - tokens);
+            }
+            
+            return result;
+          } catch (error: any) {
+            lastError = error;
 
-          throw lastError;
-        } catch (error) {
-          reject(error);
+            // Check if it's a rate limit error
+            const isRateLimit = error.status === 429 || 
+              error.message?.includes('429') || 
+              error.message?.toLowerCase().includes('rate limit');
+
+            if (isRateLimit) {
+              const retryAfter = this.extractRetryAfter(error);
+              const waitTime = retryAfter || retryDelay;
+
+              this.log(`⚠️ Rate limit hit (attempt ${attempt + 1}/${this.config.maxRetries + 1}). Waiting ${Math.ceil(waitTime / 1000)}s...`);
+              
+              if (attempt < this.config.maxRetries) {
+                await this.sleep(waitTime);
+                retryDelay = Math.min(
+                  retryDelay * this.config.backoffMultiplier,
+                  this.config.maxRetryDelay
+                );
+                continue;
+              }
+            } else {
+              // Non-rate-limit error, don't retry
+              throw error;
+            }
+          }
         }
+
+        throw lastError;
       };
 
       // Add to queue or execute immediately
       if (this.isProcessingQueue) {
-        this.requestQueue.push({ resolve, reject, execute, priority });
-        // Sort queue by priority (higher priority first)
+        this.requestQueue.push({ resolve, reject, execute: async () => {
+          try {
+            const result = await execute();
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        }, priority });
         this.requestQueue.sort((a, b) => b.priority - a.priority);
       } else {
-        this.processRequest(execute, resolve, reject);
+        this.processRequest(
+          async () => {
+            try {
+              const result = await execute();
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            }
+          },
+          resolve,
+          reject
+        );
       }
     });
   }

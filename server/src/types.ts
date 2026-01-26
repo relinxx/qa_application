@@ -27,6 +27,7 @@ export interface AgentResponse {
   message?: string;
   testFiles?: string[];
   error?: string;
+  errorCode?: string;
 }
 
 export interface CustomTool {
