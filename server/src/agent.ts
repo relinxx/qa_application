@@ -500,6 +500,15 @@ export async function runAgent(
   });
 
   // Initialize MCP client if not already done
+  await initializeMCPClient();
+
+  const { allTools, customTools } = await getAllTools();
+
+  const isSauceDemo = /saucedemo\.com/i.test(targetUrl);
+
+  // Build optimized system prompt (reduced token usage)
+  const systemPrompt = `You are a QA Engineer AI agent. AUTOMATICALLY discover and test websites.
+
 
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
