@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Code Analyzer and Crawler Agent</title>
+<style>
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11pt;
+  color: #333;
+  line-height: 1.6;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+}
+h1 {
+  color: #1e40af;
+  border-bottom: 3px solid #3b82f6;
+  padding-bottom: 10px;
+  font-size: 24pt;
+  margin-bottom: 20px;
+}
+h2 {
+  color: #2563eb;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 18pt;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 5px;
+}
+h3 {
+  color: #3b82f6;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 14pt;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 15px 0;
+}
+th, td {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 10pt;
+}
+th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #111;
+}
+p {
+  margin: 10px 0;
+  text-align: justify;
+}
+hr {
+  margin: 30px 0;
+  border: none;
+  border-top: 1px solid #d1d5db;
+}
+.meta-info {
+  color: #6b7280;
+  font-size: 10pt;
+  margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+
+<h1>Code Analyzer and Crawler Agent</h1>
+
+<div class="meta-info">
+<strong>Date:</strong> December 2024<br>
+<strong>Technology Stack:</strong> .NET 10, Blazor Server, Python, Node.js, TypeScript, Next.js
+</div>
+
+<hr>
+
+<h2>Overview</h2>
+
+<p>The platform is an automated software analysis, documentation, and testing solution designed to analyze application codebases and generate structured, comprehensive technical documentation. The generated documentation is then supplied to a crawler agent, which uses this information to navigate the application and automatically create and execute test cases based on the system's behavior.</p>
+
+<p>A Retrieval-Augmented Generation (RAG) approach is used to train the model for each specific system, ensuring that the crawler agent operates with contextual awareness of the application's architecture, features, and expected workflows.</p>
+
+<p>In essence, the analyzer agent extracts and structures knowledge from the codebase, while the crawler agent consumes this knowledge to perform intelligent, system-aware testing. The analyzer agent provides detailed metadata, such as application structure, APIs, data models, and routes, to the crawler agent, enabling it to dynamically execute relevant test cases with minimal manual configuration.</p>
+
+<hr>
+
+<h2>Analyzer Agent</h2>
+
+<h3>Supported Capabilities</h3>
+
+<table>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><strong>Supported Languages</strong></td>
+<td>.NET (C#), Python</td>
+</tr>
+<tr>
+<td><strong>Source Input</strong></td>
+<td>Local directory or Git URL</td>
+</tr>
+<tr>
+<td><strong>Git Providers</strong></td>
+<td>GitHub, GitLab, Bitbucket, Azure DevOps</td>
+</tr>
+<tr>
+<td><strong>Code Analysis</strong></td>
+<td>Classes, methods, properties, interfaces, controllers</td>
+</tr>
+<tr>
+<td><strong>API Discovery</strong></td>
+<td>REST endpoints from controllers</td>
+</tr>
+<tr>
+<td><strong>Database Analysis</strong></td>
+<td>SQL Server schema extraction</td>
+</tr>
+<tr>
+<td><strong>AI Enhancements</strong></td>
+<td>Optional OpenAI-based summaries</td>
+</tr>
+</table>
+
+<h3>Working</h3>
+
+<p>It automatically scans codebases (C#/.NET or Python) from a local path or Git URL, extracts code structure including classes, methods, API endpoints, and optionally database schemas, then generates a comprehensive Markdown technical document, with an optional AI-powered summary using OpenAI GPT-4 for intelligent insights about the application's purpose and architecture.</p>
+
+<hr>
+
+<h2>Crawler Agent</h2>
+
+<h3>Supported Capabilities</h3>
+
+<table>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><strong>Web Application Support</strong></td>
+<td>Any web application accessible via URL</td>
+</tr>
+<tr>
+<td><strong>Browser Automation</strong></td>
+<td>Playwright-based browser control via Model Context Protocol (MCP)</td>
+</tr>
+<tr>
+<td><strong>Autonomous Exploration</strong></td>
+<td>AI-driven site discovery without manual test step input</td>
+</tr>
+<tr>
+<td><strong>Test Generation</strong></td>
+<td>Automatic Playwright test suite creation in TypeScript/JavaScript</td>
+</tr>
+<tr>
+<td><strong>Test Execution</strong></td>
+<td>Automated test execution with real-time results</td>
+</tr>
+<tr>
+<td><strong>Schema Integration</strong></td>
+<td>Optional Swagger/OpenAPI schema input for enhanced context</td>
+</tr>
+<tr>
+<td><strong>User Flow Discovery</strong></td>
+<td>Automatic identification of critical user journeys, error scenarios, and edge cases</td>
+</tr>
+<tr>
+<td><strong>Test Reporting</strong></td>
+<td>Comprehensive test reports with step-by-step analysis and website structure documentation</td>
+</tr>
+</table>
+
+<h3>Working</h3>
+
+<p>It autonomously navigates web applications using Playwright MCP tools, systematically explores site structure by mapping pages, routes, and interactive elements, then automatically generates comprehensive Playwright test suites covering critical user flows (positive paths, negative paths, and edge cases) based on discovery findings. The agent executes the generated tests and produces detailed test reports in human-readable format, streaming all actions and results in real-time via Server-Sent Events (SSE).</p>
+
+</body>
+</html>

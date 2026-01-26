@@ -3,6 +3,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import OpenAI from 'openai';
 import { getCustomTools } from './tools';
 import { LogMessage } from './types';
+import { getRateLimiter } from './rateLimiter';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -10,6 +11,7 @@ import { execSync } from 'child_process';
 
 const MAX_ITERATIONS = parseInt(process.env.MAX_ITERATIONS || '50', 10);
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
+const TOKENS_PER_MINUTE = parseInt(process.env.TOKENS_PER_MINUTE || '25000', 10);
 
 let mcpClient: Client | null = null;
 let mcpTransport: StdioClientTransport | null = null;
@@ -210,6 +212,14 @@ export async function runAgent(
     apiKey: process.env.OPENAI_API_KEY
   });
 
+  // Initialize rate limiter
+  const rateLimiter = getRateLimiter({
+    tokensPerMinute: TOKENS_PER_MINUTE,
+    maxRetries: 5,
+    initialRetryDelay: 1000,
+    maxRetryDelay: 60000
+  });
+
   // Initialize MCP client if not already done
   await initializeMCPClient();
 
@@ -217,64 +227,35 @@ export async function runAgent(
 
   const isSauceDemo = /saucedemo\.com/i.test(targetUrl);
 
-  // Build system prompt
-  const systemPrompt = `You are an expert QA Engineer AI agent with full autonomy. Your task is to AUTOMATICALLY discover, analyze, and test websites without manual test step input.
+  // Build optimized system prompt (reduced token usage)
+  const systemPrompt = `You are a QA Engineer AI agent. AUTOMATICALLY discover and test websites.
 
-PHASE 1: AUTONOMOUS SITE DISCOVERY
-1. Navigate to the provided URL using Playwright MCP tools (browser_navigate, Maps, etc.)
-2. Systematically explore the site structure:
-   - Map all pages/routes you can access (home, login, product pages, checkout, etc.)
-   - Identify all interactive elements (buttons, forms, links, inputs, dropdowns)
-   - Document the site's "schema" - what features exist, what flows are possible
-   - Use Maps tool to get page structure, click tool to navigate, screenshot tool to understand UI
-3. Analyze user flows automatically:
-   - What are the critical user journeys? (e.g., login → browse → add to cart → checkout)
-   - What are the error scenarios? (e.g., invalid login, empty forms, locked accounts)
-   - What are the edge cases? (e.g., slow loading, broken images, network issues)
+PHASE 1: DISCOVERY
+1. Navigate and explore using Playwright MCP tools (browser_navigate, Maps, etc.)
+2. Map pages, interactive elements, and user flows
+3. Identify critical journeys, error scenarios, and edge cases
 
-PHASE 2: AUTONOMOUS TEST GENERATION
-4. Based on your discovery, automatically derive comprehensive test scenarios:
-   - For each critical user flow, create a test case
-   - Include positive paths (happy flows), negative paths (errors), and edge cases
-   - No manual test steps needed - YOU figure out what to test based on what you discovered
-5. Write Playwright test suites that cover these automatically-discovered flows
-6. Save the test files using the saveTestFile tool (use unique filenames with timestamps)
-7. Run the tests using runPlaywrightTests tool (prefer running only the file you just created to avoid unrelated failing suites)
+PHASE 2: TEST GENERATION
+4. Derive test scenarios from discovery
+5. Write Playwright test suites covering discovered flows
+6. Save with saveTestFile (unique timestamped filenames)
+7. Run with runPlaywrightTests (prefer single file to avoid unrelated failures)
 
-${schema ? `\nAdditional context: The user provided a Swagger/OpenAPI schema:\n${schema}\n` : ''}
+${schema ? `\nSwagger/OpenAPI schema:\n${schema}\n` : ''}
 
 ${isSauceDemo ? `
-SauceDemo requirements (must-do):
-- Create an end-to-end purchase flow test that covers: login (standard_user/secret_sauce) → add any item to cart → cart → checkout → fill checkout info (random values ok) → continue → finish.
-- Also create a negative login test for locked_out_user that asserts the locked-out error.
-- Use SauceDemo selectors (prefer data-test selectors like [data-test="username"], [data-test="password"], [data-test="login-button"], [data-test="checkout"], etc.).
-- Save tests with a UNIQUE filename per run (include a timestamp), e.g. "saucedemo-e2e-YYYYMMDD-HHMMSS.spec.ts", to avoid overwriting prior runs.
-- After saving, call runPlaywrightTests with testFile pointing to ONLY the generated spec, e.g. runPlaywrightTests({ "testFile": "tests/saucedemo-e2e-....spec.ts" }).
+SauceDemo: Create purchase flow (login standard_user/secret_sauce → cart → checkout → finish) and negative login (locked_out_user). Use data-test selectors. Unique timestamped filenames.
 ` : ''}
 
-AUTONOMOUS DISCOVERY GUIDELINES:
-- Be thorough: Explore multiple pages, try different navigation paths, click through menus
-- Be systematic: Map out the site structure BEFORE writing tests - understand what exists first
-- Be intelligent: Identify patterns (e.g., if you see a login form, check for registration, password reset, etc.)
-- Use Playwright MCP tools extensively: Maps (to understand page structure), click (to navigate), screenshot (to verify UI state)
-- Document your findings: As you explore, mentally map out what test scenarios make sense
-- Avoid excessive back navigation:
-  - Do not call browser_navigate_back more than 2 times in a row.
-  - Prefer direct navigation (browser_navigate) or clicking explicit links/buttons.
+GUIDELINES:
+- Map structure BEFORE writing tests
+- Use Maps, click, screenshot tools
+- Max 2 consecutive browser_navigate_back calls
+- Prefer data-test selectors, stable IDs
+- Handle dialogs: page.on('dialog', d => d.accept())
+- Run tests after writing
 
-TEST GENERATION GUIDELINES:
-- Write well-structured, maintainable test code based on your discoveries
-- Include proper test descriptions explaining what flow you're testing
-- Use robust selectors (prefer data-test attributes, stable IDs, or semantic selectors)
-- Include proper waits and assertions based on what you observed during exploration
-- Save tests with descriptive filenames (e.g., "login.spec.ts", "checkout-flow.spec.ts")
-- Test files should be valid TypeScript Playwright test code
-- In generated Playwright tests, proactively handle unexpected browser dialogs/modals:
-  - Register a dialog handler: page.on('dialog', d => d.accept())
-  - If an in-page modal appears with an "OK" button (e.g., change-password prompts), click OK before continuing
-- After writing tests, run them to verify they work
-
-When you're done, respond in STRICT JSON (no markdown, no prose) using this schema:
+Response format (STRICT JSON):
 {
   "summary": string,
   "generatedFiles": string[],
@@ -315,13 +296,32 @@ No manual test steps needed - discover everything yourself and figure out what t
         timestamp: new Date().toISOString()
       });
 
-      // Call OpenAI with current messages and available tools
-      const response = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        messages: messages,
-        tools: allTools,
-        tool_choice: 'auto'
-      });
+      // Estimate tokens for this request
+      const estimatedTokens = estimateRequestTokens(messages, allTools);
+      const stats = rateLimiter.getTokenStats();
+      
+      if (iterations % 5 === 0) {
+        onLog({
+          type: 'info',
+          message: `Token usage: ${stats.current.toLocaleString()}/${stats.limit.toLocaleString()} (${stats.percentage.toFixed(1)}%)`,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Call OpenAI with rate limiting and retry logic
+      // The rate limiter will automatically extract and record actual token usage from the response
+      const response = await rateLimiter.executeWithRateLimit(
+        async () => {
+          return await openai.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: messages,
+            tools: allTools,
+            tool_choice: 'auto'
+          });
+        },
+        estimatedTokens,
+        1 // Priority
+      );
 
       const assistantMessage = response.choices[0].message;
       messages.push(assistantMessage);
@@ -462,6 +462,36 @@ No manual test steps needed - discover everything yourself and figure out what t
       error: error.message
     };
   }
+}
+
+/**
+ * Estimate tokens for a request (rough approximation)
+ */
+function estimateRequestTokens(messages: any[], tools?: any[]): number {
+  let tokens = 0;
+  
+  // Count message tokens (rough estimate: 1 token ≈ 4 characters)
+  for (const msg of messages) {
+    if (typeof msg.content === 'string') {
+      tokens += Math.ceil(msg.content.length / 4);
+    } else if (Array.isArray(msg.content)) {
+      for (const item of msg.content) {
+        if (item.type === 'text' && item.text) {
+          tokens += Math.ceil(item.text.length / 4);
+        }
+      }
+    }
+  }
+
+  // Add tool definitions (rough estimate)
+  if (tools && tools.length > 0) {
+    tokens += tools.length * 100; // ~100 tokens per tool definition
+  }
+
+  // Add overhead for API structure
+  tokens += 50;
+
+  return tokens;
 }
 
 /**
