@@ -1,0 +1,35 @@
+{
+  "name": "qa-application",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QA Application - Automated Test Generation Agent",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "volta": {
+    "node": "20.11.0",
+    "npm": "10.2.4"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
+    "start:client": "cd client && npm run start",
+    "start:server": "cd server && npm run start",
+    "setup": "node scripts/setup.js",
+    "playwright:install": "cd server && npx playwright install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

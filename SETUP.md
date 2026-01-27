@@ -2,11 +2,70 @@
 
 ## Prerequisites Check
 
-- [ ] Node.js 18+ installed (`node --version`)
+- [ ] Node.js 18+ installed (`node --version`) - Recommended: **20.11.0**
 - [ ] npm installed (`npm --version`)
 - [ ] OpenAI API key (get from https://platform.openai.com/api-keys)
 
-## Step-by-Step Setup
+---
+
+## 🔧 Environment Isolation (Recommended)
+
+This project pins Node.js version to ensure consistent behavior across machines.
+
+### Option 1: Volta (Best for Windows)
+
+```powershell
+# Install Volta (run PowerShell as Administrator)
+winget install Volta.Volta
+
+# Restart terminal, then navigate to project
+cd qa_application
+
+# Volta automatically installs and uses the pinned Node version
+node --version  # Should show v20.11.0
+```
+
+### Option 2: fnm (Fast Node Manager)
+
+```powershell
+# Install fnm
+winget install Schniz.fnm
+
+# Add to PowerShell profile (run once)
+fnm env --use-on-cd | Out-String | Invoke-Expression
+
+# Restart terminal
+cd qa_application
+fnm install    # Reads .nvmrc
+fnm use        # Switches to project's Node version
+```
+
+### Option 3: nvm-windows
+
+```powershell
+# Download from: https://github.com/coreybutler/nvm-windows/releases
+nvm install 20.11.0
+nvm use 20.11.0
+```
+
+---
+
+## Automated Setup (Recommended)
+
+```bash
+cd qa_application
+npm run setup
+```
+
+This will:
+- Validate Node.js version
+- Install all dependencies
+- Create .env template
+- Install Playwright browsers
+
+---
+
+## Manual Step-by-Step Setup
 
 ### 1. Backend Setup
 
@@ -77,6 +136,17 @@ You should see:
 4. Watch the agent console for real-time updates
 
 ## Troubleshooting
+
+### Wrong Node.js Version
+```bash
+# Check current version
+node --version
+
+# If wrong, use your version manager:
+volta install node@20.11.0   # Volta
+fnm use                       # fnm (reads .nvmrc)
+nvm use 20.11.0              # nvm-windows
+```
 
 ### Backend won't start
 - Check that `.env` file exists and has `OPENAI_API_KEY`
