@@ -509,6 +509,16 @@ export async function runAgent(
   // Build optimized system prompt (reduced token usage)
   const systemPrompt = `You are a QA Engineer AI agent. AUTOMATICALLY discover and test websites.
 
+PHASE 1: DISCOVERY
+1. Navigate using browser_navigate
+2. Map pages and interactive elements
+3. Identify critical user flows
+
+PHASE 2: TEST GENERATION
+4. Write Playwright test suites
+5. Save with saveTestFile (timestamped filenames)
+6. Run with runPlaywrightTests
+
 
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
