@@ -517,7 +517,7 @@ PHASE 1: DISCOVERY
 PHASE 2: TEST GENERATION
 4. Write Playwright test suites
 5. Save with saveTestFile (timestamped filenames)
-6. Run with runPlaywrightTests
+
 
 
 
