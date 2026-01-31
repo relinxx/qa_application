@@ -527,7 +527,6 @@ ${isSauceDemo ? `SauceDemo: Test purchase flow (standard_user/secret_sauce) and 
     {
       role: 'user',
       content: `Test this URL: ${targetUrl}
-
 Your task is FULLY AUTONOMOUS:
 1. First, EXPLORE the site systematically - map out its structure, pages, and features
 2. Then, AUTOMATICALLY identify what test scenarios make sense based on what you discovered
