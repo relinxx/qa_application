@@ -535,7 +535,6 @@ Your task is FULLY AUTONOMOUS:
 No manual test steps needed - discover everything yourself and figure out what to test.${isSauceDemo ? '\n\nNote: This is SauceDemo - if you discover login functionality, test multiple user personas. If you discover a shopping cart, test the full purchase flow.' : ''}`
     }
   ];
-
   let iterations = 0;
   let consecutiveNavigateBack = 0;
   let consecutiveFailedClicks = 0;
