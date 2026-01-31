@@ -574,7 +574,6 @@ No manual test steps needed - discover everything yourself and figure out what t
         message: `Agent iteration ${iterations}/${MAX_ITERATIONS} | Messages: ${messages.length} | Est. tokens: ${estimatedTokens.toLocaleString()}`,
         timestamp: new Date().toISOString()
       });
-
       // Call OpenAI with rate limiting and retry logic
       let response;
       try {
