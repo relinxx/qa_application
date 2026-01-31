@@ -519,11 +519,6 @@ PHASE 2: TEST GENERATION
 5. Save with saveTestFile (timestamped filenames)
 ${schema ? `\nSchema:\n${schema}\n` : ''}
 ${isSauceDemo ? `SauceDemo: Test purchase flow (standard_user/secret_sauce) and locked_out_user. Use data-test selectors.` : ''}
-
-
-
-
-
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     {
       role: 'system',
