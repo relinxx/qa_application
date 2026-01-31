@@ -546,7 +546,7 @@ No manual test steps needed - discover everything yourself and figure out what t
     // Clear rate limiter logger
     rateLimiter.setLogger(null);
     
-    // Close browser
+    
     try {
       if (mcpClient) {
         await withTimeout(
