@@ -559,7 +559,7 @@ No manual test steps needed - discover everything yourself and figure out what t
     } catch (e) {
       // Browser may already be closed - that's ok
     }
-  };
+  
 
   try {
     while (iterations < MAX_ITERATIONS) {
