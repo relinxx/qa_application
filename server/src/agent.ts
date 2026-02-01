@@ -527,12 +527,7 @@ ${isSauceDemo ? `SauceDemo: Test purchase flow (standard_user/secret_sauce) and 
     {
       role: 'user',
       content: `Test this URL: ${targetUrl}
-Your task is FULLY AUTONOMOUS:
-1. First, EXPLORE the site systematically - map out its structure, pages, and features
-2. Then, AUTOMATICALLY identify what test scenarios make sense based on what you discovered
-3. Finally, GENERATE and RUN comprehensive Playwright tests covering those scenarios
-
-No manual test steps needed - discover everything yourself and figure out what to test.${isSauceDemo ? '\n\nNote: This is SauceDemo - if you discover login functionality, test multiple user personas. If you discover a shopping cart, test the full purchase flow.' : ''}`
+{isSauceDemo ? '\n\nNote: This is SauceDemo - if you discover login functionality, test multiple user personas. If you discover a shopping cart, test the full purchase flow.' : ''}`
     }
   ];
   let iterations = 0;
