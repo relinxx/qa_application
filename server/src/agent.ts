@@ -568,7 +568,6 @@ No manual test steps needed - discover everything yourself and figure out what t
       // Estimate tokens for this request
       const estimatedTokens = estimateRequestTokens(messages, allTools);
       const stats = rateLimiter.getTokenStats();
-      
       onLog({
         type: 'agent',
         message: `Agent iteration ${iterations}/${MAX_ITERATIONS} | Messages: ${messages.length} | Est. tokens: ${estimatedTokens.toLocaleString()}`,
