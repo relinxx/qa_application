@@ -562,7 +562,7 @@ No manual test steps needed - discover everything yourself and figure out what t
   
 
   try 
-    while (iterations < MAX_ITERATIONS) {
+    while (iterations < M
       iterations++;
 
       // Estimate tokens for this request
