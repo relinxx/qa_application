@@ -561,7 +561,7 @@ No manual test steps needed - discover everything yourself and figure out what t
     }
   
 
-  try {
+  try 
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
