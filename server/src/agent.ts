@@ -541,7 +541,15 @@ ${isSauceDemo ? `SauceDemo: Test purchase flow (standard_user/secret_sauce) and 
     // Clear rate limiter logger
     rateLimiter.setLogger(null);
     
-    
+    CRITICAL RULES:
+- MODAL/POPUP HANDLING: After login or any action, CHECK for modal dialogs (password change, alerts, etc). If you see a modal with OK/Cancel/Close button, CLICK IT FIRST before doing anything else. Look for elements like: button containing "OK", "Close", "Cancel", "Dismiss", "Continue", or X icons.
+- If clicks fail repeatedly, a modal is likely blocking - take a snapshot and look for dismiss buttons.
+- Max 2 consecutive browser_navigate_back calls
+- Use data-test selectors when available
+- In tests: page.on('dialog', d => d.accept())
+- WHEN FINISHED: Call browser_close to close the browser window
+
+
     try {
       if (mcpClient) {
         await withTimeout(
