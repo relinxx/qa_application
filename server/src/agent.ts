@@ -549,7 +549,11 @@ ${isSauceDemo ? `SauceDemo: Test purchase flow (standard_user/secret_sauce) and 
 - In tests: page.on('dialog', d => d.accept())
 - WHEN FINISHED: Call browser_close to close the browser window
 
-
+Response format (STRICT JSON):
+{
+  "summary": string,
+  "generatedFiles": string[],
+  
     try {
       if (mcpClient) {
         await withTimeout(
