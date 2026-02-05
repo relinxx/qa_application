@@ -553,7 +553,11 @@ Response format (STRICT JSON):
 {
   "summary": string,
   "generatedFiles": string[],
-  
+  Response format (STRICT JSON):
+{
+  "summary": string,
+  "generatedFiles": string[],
+
     try {
       if (mcpClient) {
         await withTimeout(
