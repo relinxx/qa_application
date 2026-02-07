@@ -577,22 +577,7 @@ Response format (STRICT JSON):
     }
   
 
-  try 
-    while (iterations < M
-      iterations++;
-
-      // Estimate tokens for this request
-      const estimatedTokens = estimateRequestTokens(messages, allTools);
-      const stats = rateLimiter.getTokenStats();
-      onLog({
-        type: 'agent',
-        message: `Agent iteration ${iterations}/${MAX_ITERATIONS} | Messages: ${messages.length} | Est. tokens: ${estimatedTokens.toLocaleString()}`,
-        timestamp: new Date().toISOString()
-      });
-      // Call OpenAI with rate limiting and retry logic
-      let response;
-      try {
-        response = await rateLimiter.executeWithRateLimit(
+  t(
           async () => {
             return await openai.chat.completions.create({
               model: OPENAI_MODEL,
