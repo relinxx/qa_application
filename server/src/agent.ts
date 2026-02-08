@@ -566,24 +566,7 @@ Response format (STRICT JSON):
     try {
       if (mcpClient) {
         await withTimeout(
-          mcpClient.callTool({ name: 'browser_close', arguments: {} }),
-          5000,
-  
-        );
-        consecutiveErrors = 0; // Reset on success
-      } catch (error: any) {
-        const classifiedError = classifyOpenAIError(error);
-        
-        if (!classifiedError.recoverable) {
-          await cleanup();
-          return {
-            success: false
-            error: classifiedError.message,
-            errorCode: classifiedError.code
-          };
-        }
-
-        consecutiveErrors++;
+          mcpClient.callTool({ name: 'br
         onLog({
           type: 'warning',
           message: `OpenAI error (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${classifiedError.message}`,
