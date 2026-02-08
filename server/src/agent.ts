@@ -568,26 +568,7 @@ Response format (STRICT JSON):
         await withTimeout(
           mcpClient.callTool({ name: 'browser_close', arguments: {} }),
           5000,
-          'browser_close'
-        );
-        onLog({ type: 'info', message: 'Browser closed', timestamp: new Date().toISOString() });
-      }
-    } catch (e) {
-      // Browser may already be closed - that's ok
-    }
   
-
-  t(
-          async () => {
-            return await openai.chat.completions.create({
-              model: OPENAI_MODEL,
-              messages: messages,
-              tools: allTools,
-              tool_choice: 'auto'
-            });
-          },
-          estimatedTokens,
-          1
         );
         consecutiveErrors = 0; // Reset on success
       } catch (error: any) {
