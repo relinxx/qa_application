@@ -577,7 +577,7 @@ Response format (STRICT JSON):
         if (!classifiedError.recoverable) {
           await cleanup();
           return {
-            success: false,
+            success: false
             error: classifiedError.message,
             errorCode: classifiedError.code
           };
