@@ -577,19 +577,6 @@ Response format (STRICT JSON):
           await cleanup();
           return {
             success: false,
-            error: `Too many consecutive errors: ${classifiedError.message}`,
-            errorCode: classifiedError.code
-          };
-        }
-
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 2000 * consecutiveErrors));
-        continue;
-      }
-
-      const assistantMessage = response.choices[0].message;
-      messages.push(assistantMessage);
-
       // Prune message history to prevent token explosion
       pruneMessageHistory(messages);
 
