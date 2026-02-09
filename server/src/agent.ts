@@ -577,13 +577,6 @@ Response format (STRICT JSON):
           await cleanup();
           return {
             success: false,
-      // Prune message history to prevent token explosion
-      pruneMessageHistory(messages);
-
-      // If no tool calls, agent is done
-      if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
-        const rawFinal = assistantMessage.content || 'Agent completed successfully.';
-
         // Try to parse the model's final JSON for a clean, formatted summary.
         let formattedSummary = rawFinal;
         try {
