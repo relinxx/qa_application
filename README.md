@@ -1,143 +1,144 @@
-# QA_APP - Automated QA Agent
+<!-- markdownlint-disable MD001 MD013 MD033 MD041 -->
+<div align="center">
 
-A web-based application that uses the **Model Context Protocol (MCP)** to orchestrate an AI agent. The agent navigates websites using Playwright, detects user flows, writes test suites, and executes them autonomously.
+# QA Agent Lab
+
+### An MCP-powered agent that explores web applications and writes executable tests
+
+[Live controlled demo](https://qa-agent-lab-iota.vercel.app) ·
+[Portfolio](https://relinxx.vercel.app/projects/qa-application) ·
+[Setup guide](SETUP.md)
+
+![MCP](https://img.shields.io/badge/MCP-tool%20orchestration-22C55E?style=flat-square)
+![GPT-4o](https://img.shields.io/badge/OpenAI-GPT--4o-10B981?style=flat-square)
+![Playwright](https://img.shields.io/badge/Playwright-browser%20automation-2EAD33?style=flat-square)
+![Next.js](https://img.shields.io/badge/Next.js-TypeScript-111827?style=flat-square)
+
+</div>
+
+QA Agent Lab is an autonomous quality-assurance system that turns a target application into an inspected, exercised, and documented test surface. The agent uses GPT-4o to choose browser tools exposed through the Model Context Protocol, discovers critical user flows, writes Playwright specifications, executes them, and streams progress to the frontend.
+
+The [public demo](https://qa-agent-lab-iota.vercel.app) runs the same core idea inside fixed sandbox applications and disposable Chromium sessions, making the workflow safe to evaluate without granting arbitrary browser access.
+
+## What the agent does
+
+1. Accepts a target URL and optional OpenAPI context.
+2. Starts a Playwright MCP session.
+3. Inspects pages and interactive elements.
+4. Chooses navigation, input, click, and assertion actions.
+5. Writes timestamped Playwright test files.
+6. Executes generated tests and reports the result.
+7. Streams tool activity and progress to the UI through SSE.
 
 ## Architecture
 
-- **Frontend**: Next.js + React + TypeScript + Tailwind CSS
-- **Backend**: Node.js + Express + TypeScript
-- **Protocol**: Model Context Protocol (MCP) SDK
-- **AI**: OpenAI GPT-4o
-- **Testing**: Playwright
+![QA Agent Lab architecture](docs/architecture.svg)
 
-## Prerequisites
+The system separates reasoning, browser control, and file execution:
 
-- Node.js 18+ and npm
-- OpenAI API key
-- Playwright browsers (installed automatically)
+- **Agent loop:** manages model messages, tool calls, iteration limits, and recovery.
+- **MCP layer:** exposes browser actions through the Playwright MCP server.
+- **Custom tools:** save generated tests, execute Playwright, and list artifacts.
+- **Safety controls:** validate URLs and file paths, cap output sizes, time out tools, and prune message history.
+- **Delivery layer:** Express streams progress while the Next.js client renders the live run.
 
-## Setup Instructions
+## Engineering highlights
 
-### 1. Backend Setup
+| Area | Implementation |
+| --- | --- |
+| Tool orchestration | MCP client over a Playwright stdio transport |
+| Reasoning | GPT-4o function calling with bounded iterations |
+| Browser automation | Navigation, snapshots, form input, clicks, and assertions |
+| Test generation | Playwright `.spec.ts` / `.spec.js` artifacts |
+| Live feedback | Server-Sent Events |
+| Reliability | Tool timeouts, reconnect attempts, rate limiting, and history pruning |
+| File safety | Extension allowlist, size cap, and directory-traversal protection |
 
-```bash
+## Safety model
+
+Autonomous browser agents need explicit boundaries. This codebase includes:
+
+- URL format validation before starting a run
+- Sanitized test-file paths constrained to `server/tests`
+- A 1 MB generated-file limit
+- A five-minute test execution timeout
+- A 60-second individual tool timeout
+- Bounded model iterations
+- Truncated browser snapshots to control context growth
+- MCP reconnection handling for interrupted sessions
+
+The hosted demo narrows this further by allowing only its own `/sandbox/` routes and using disposable browser sessions.
+
+## Repository structure
+
+```text
+.
+|-- client/                    # Next.js run console
+|   `-- src/
+|-- server/
+|   |-- src/
+|   |   |-- agent.ts          # GPT-4o + MCP agent loop
+|   |   |-- tools.ts          # Test artifact and execution tools
+|   |   |-- rateLimiter.ts    # Request/token pacing
+|   |   `-- index.ts          # Express and SSE delivery
+|   `-- tests/                 # Generated Playwright tests
+|-- docs/architecture.svg
+|-- CRAWLER_AGENT_DOCUMENTATION.md
+|-- SETUP.md
+`-- README.md
+```
+
+## Run locally
+
+Requirements: Node.js 18+, npm, an OpenAI API key, and Playwright browser dependencies.
+
+```powershell
 cd server
 npm install
 npx playwright install
+Copy-Item .env.example .env
 ```
 
-Create a `.env` file in the `server/` directory:
+Configure:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-PORT=3001
+OPENAI_API_KEY=your_key
 OPENAI_MODEL=gpt-4o
+PORT=3001
 MAX_ITERATIONS=50
 ```
 
-### 2. Frontend Setup
+Start the backend:
 
-```bash
-cd client
-npm install
-```
-
-### 3. Running the Application
-
-**Terminal 1 - Backend:**
-```bash
+```powershell
 cd server
 npm run dev
 ```
 
-The backend will start on `http://localhost:3001`
+Start the frontend in another terminal:
 
-**Terminal 2 - Frontend:**
-```bash
+```powershell
 cd client
+npm install
 npm run dev
 ```
 
-The frontend will start on `http://localhost:3000`
+Open `http://localhost:3000`.
 
-### 4. Usage
+## Build checks
 
-1. Open `http://localhost:3000` in your browser
-2. Enter a target URL (e.g., `https://demo.realworld.io`)
-3. Optionally upload or paste a Swagger/OpenAPI schema
-4. Click "Start Test Generation"
-5. Watch the agent console as it:
-   - Navigates the website
-   - Discovers user flows
-   - Writes Playwright tests
-   - Executes the tests
+```powershell
+cd server
+npm run build
 
-## Project Structure
-
-```
-QA_Application_DEMO/
-├── server/                 # Node.js backend
-│   ├── src/
-│   │   ├── index.ts       # Express server
-│   │   ├── agent.ts       # MCP client & agent loop
-│   │   ├── tools.ts       # Custom tools
-│   │   └── types.ts       # TypeScript types
-│   ├── tests/             # Generated test files
-│   └── package.json
-├── client/                # Next.js frontend
-│   ├── src/
-│   │   ├── app/           # Next.js app directory
-│   │   ├── components/    # React components
-│   │   └── lib/           # API client
-│   └── package.json
-└── README.md
+cd ..\client
+npm run build
 ```
 
-## How It Works
+## Scope
 
-1. **User Input**: User provides a URL (and optionally a Swagger schema)
-2. **MCP Connection**: Backend connects to Playwright MCP server
-3. **Agent Loop**: 
-   - LLM receives context and available tools
-   - LLM decides which tool to call (navigate, click, screenshot, etc.)
-   - Tool executes via MCP or custom tools
-   - Results fed back to LLM
-   - Process repeats until tests are written
-4. **Test Generation**: Agent writes Playwright test files to `server/tests/`
-5. **Test Execution**: Agent can run tests and report results
-6. **Real-time Updates**: All actions stream to frontend via SSE
+This is an applied-agent engineering project: the difficult part is not generating test text, but maintaining a reliable loop across model decisions, browser state, tool failures, generated files, test execution, and a live user-facing trace.
 
-## Custom Tools
+## Author
 
-The agent has access to:
-
-- **Playwright MCP Tools**: `Maps`, `click`, `screenshot`, `fill`, etc.
-- **Custom Tools**:
-  - `saveTestFile`: Save Playwright test files
-  - `runPlaywrightTests`: Execute tests
-  - `listTestFiles`: List generated test files
-
-## Security Considerations
-
-- URLs are validated before processing
-- File paths are sanitized to prevent directory traversal
-- Environment variables for sensitive data
-- Rate limiting recommended for production
-
-## Troubleshooting
-
-### MCP Server Connection Issues
-- Ensure `npx` can access `@playwright/mcp@latest`
-- Check network connectivity
-
-### OpenAI API Errors
-- Verify `OPENAI_API_KEY` is set correctly
-- Check API quota and billing
-
-### Playwright Installation
-- Run `npx playwright install` in the `server/` directory
-- Ensure system dependencies are installed
-
-## License
-
-ISC
+Built by [Syed Muhammad Rehan](https://www.linkedin.com/in/relinxx), an AI-focused software engineer interested in agent reliability, browser automation, RAG, and production backend systems.

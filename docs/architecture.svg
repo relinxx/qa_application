@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">QA Agent Lab architecture</title>
+  <desc id="desc">A Next.js console sends a QA objective to an Express server, where GPT-4o chooses MCP and custom tools to control Playwright, generate tests, execute them, and stream results back through SSE.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#22C55E"/>
+    </marker>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="680" fill="#071018"/>
+  <g font-family="Arial, sans-serif">
+    <text x="62" y="68" fill="#F8FAFC" font-size="31" font-weight="700">QA Agent Lab</text>
+    <text x="62" y="102" fill="#94A3B8" font-size="17">Agent reasoning, browser tools, executable proof</text>
+    <rect x="62" y="135" width="1076" height="1" fill="#334155"/>
+
+    <rect x="62" y="182" width="220" height="140" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="88" y="220" fill="#22C55E" font-size="13" font-weight="700">CLIENT</text>
+    <text x="88" y="254" fill="#F8FAFC" font-size="21" font-weight="700">Next.js console</text>
+    <text x="88" y="282" fill="#94A3B8" font-size="14">Target + test objective</text>
+    <text x="88" y="304" fill="#94A3B8" font-size="14">Live SSE trace</text>
+
+    <rect x="350" y="182" width="220" height="140" rx="6" fill="#0F172A" stroke="#22C55E"/>
+    <text x="376" y="220" fill="#22C55E" font-size="13" font-weight="700">ORCHESTRATION</text>
+    <text x="376" y="254" fill="#F8FAFC" font-size="21" font-weight="700">Agent loop</text>
+    <text x="376" y="282" fill="#94A3B8" font-size="14">GPT-4o tool selection</text>
+    <text x="376" y="304" fill="#94A3B8" font-size="14">Limits + recovery</text>
+
+    <rect x="638" y="182" width="220" height="140" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="664" y="220" fill="#22C55E" font-size="13" font-weight="700">PROTOCOL</text>
+    <text x="664" y="254" fill="#F8FAFC" font-size="21" font-weight="700">MCP client</text>
+    <text x="664" y="282" fill="#94A3B8" font-size="14">Typed browser tools</text>
+    <text x="664" y="304" fill="#94A3B8" font-size="14">Stdio transport</text>
+
+    <rect x="926" y="182" width="212" height="140" rx="6" fill="#10231A" stroke="#22C55E"/>
+    <text x="952" y="220" fill="#22C55E" font-size="13" font-weight="700">RUNTIME</text>
+    <text x="952" y="254" fill="#F8FAFC" font-size="21" font-weight="700">Playwright</text>
+    <text x="952" y="282" fill="#A7F3D0" font-size="14">Inspect · act · assert</text>
+    <text x="952" y="304" fill="#A7F3D0" font-size="14">Disposable browser</text>
+  </g>
+
+  <g stroke="#22C55E" stroke-width="2" fill="none" marker-end="url(#arrow)" filter="url(#glow)">
+    <path d="M282 252H336"/>
+    <path d="M570 252H624"/>
+    <path d="M858 252H912"/>
+  </g>
+
+  <path d="M1032 322V365H460V335" stroke="#22C55E" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <g font-family="Arial, sans-serif">
+    <rect x="205" y="420" width="340" height="150" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="231" y="458" fill="#22C55E" font-size="13" font-weight="700">CUSTOM TOOLS</text>
+    <text x="231" y="491" fill="#F8FAFC" font-size="19" font-weight="700">Generated test artifacts</text>
+    <text x="231" y="521" fill="#94A3B8" font-size="14">saveTestFile · listTestFiles</text>
+    <text x="231" y="547" fill="#94A3B8" font-size="14">path and file-size validation</text>
+
+    <rect x="655" y="420" width="340" height="150" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="681" y="458" fill="#22C55E" font-size="13" font-weight="700">EXECUTION</text>
+    <text x="681" y="491" fill="#F8FAFC" font-size="19" font-weight="700">Playwright test runner</text>
+    <text x="681" y="521" fill="#94A3B8" font-size="14">Assertions + pass/fail report</text>
+    <text x="681" y="547" fill="#94A3B8" font-size="14">bounded process timeout</text>
+  </g>
+
+  <path d="M545 495H641" stroke="#22C55E" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M655 546H588V605H172V336" stroke="#22C55E" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <text x="62" y="642" fill="#64748B" font-family="Arial, sans-serif" font-size="14">Express + SSE · OpenAI function calling · Playwright MCP · generated executable specifications</text>
+</svg>
